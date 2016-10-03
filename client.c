@@ -1,4 +1,4 @@
-//聊天室的客户端
+//Chatroom Client
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -10,88 +10,88 @@
 #include <signal.h>
 #include <string.h>
 
-//定义变量保存socket描述符
+// declare socket 
 int sockfd;
 
-//初始化客户端
+// intialize Client
 void init(void);
-//启动客户端给服务器发消息
+// start Client and send message to Server
 void start(void);
-//关闭客户端
+// Destroy Server
 void destroy(int signo);
-//接受服务端发送来的数据
+// Receive Msg
 void* rcvMsg(void* p);
 
 int main()
 {
-	//设置关闭客户端操作
+	// set signal to stop Client operations
 	signal(SIGINT,destroy);
-	//初始化客户端
+	// initialization
 	init();
-	//启动服务器
+	// start Server
 	start();
 	return 0;
 }
 
-//初始化客户端
+// Initialization
 void init(void)
 {
-	printf("正在连接服务器...\n");
+	printf("Connecting to Server...\n");
 	sleep(3);
-	//1.创建socket
+	//1. create socket
 	sockfd = socket(AF_INET,SOCK_STREAM,0);
 	if(-1 == sockfd)
 	{
 		perror("socket"),exit(-1);
 	}
-	//2.准备通信地址
+	//2. prepare socket address
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8888);
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	//3.连接服务器
+	//3. connect to Server
 	int res = connect(sockfd,(struct sockaddr*)&addr,sizeof(addr));
 	if(-1 == res)
 	{
 		perror("connect client"),exit(-1);
 	}
-	printf("连接服务器成功\n");
+	printf("Server Connected.\n");
 }
 
-//启动客户端给服务器发消息
+// Start Client to send msg to Server 
 void start(void)
 {
-	//1.给服务器端发送信息
-	printf("请输入你的昵称:\n");
+	//1. Send msg to Server
+	printf("Enter your username:\n");
 	char name[100] = {};
 	scanf("%s",name);
-	strcat(name,":");
-	//2.开辟新线程来接受服务器端的数据
+	strcat(name,":"); 
+	//2. create new thread to receive data from Server
 	pthread_t pid;
 	pthread_create(&pid,0,rcvMsg,0);
 	while(1)
 	{
 		char buf[100] = {};
 		sleep(3);
-		printf("请输入发送的内容：\n");
+		printf("Enter your content:\n");
 		scanf("%s",buf);
 		char msg[200] = {};
 		sprintf(msg,"%s%s",name,buf);;
-		//发送数据
+		// Send data
 		send(sockfd,msg,strlen(msg),0);
 	}
 }
 
-//关闭客户端
+// Destroy Client
 void destroy(int signo)
 {
-	printf("正在关闭客户端...\n");
+	printf("Client Destroying...\n");
 	close(sockfd);
 	sleep(3);
 	exit(0);
 }
 
-//接受服务端发送来的数据
+// Receive Msg from Server
 void* rcvMsg(void* p)
 {
 	while(1)
