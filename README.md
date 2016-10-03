@@ -1,0 +1,2 @@
+# TCP-Chatroom
+• Developed a chatroom model using TCP protocol; designed to support online text chatting for at most 100 users; requires each user’s username and password when login • Applied multithreading programming at client-side to implement group-messaging function; able to separate message receiving and sending functions at server-side; supports Makefile using multiple file programming method • Obtained hands-on experience with TCP protocol, multithreading, and multiple-file programming
