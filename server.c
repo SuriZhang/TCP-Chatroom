@@ -1,4 +1,4 @@
-//聊天室的服务器端
+// Chatroom Server
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -10,110 +10,111 @@
 #include <signal.h>
 #include <string.h>
 
-//定义变量记录socket描述符
+// declare a variable to record socket descriptor
 int sockfd;
-//定义socket描述符数组来记录所有客户端的fd
+// declare an array to record all clients' fd
 int fds[100];
-//定义变量记录数组的下标
+// variable to keep track of array indices
 int size = 0;
 
-//初始化服务器
+// initialize Server
 void init(void);
-//启动服务器
+// start Server
 void start(void);
-//关闭服务器
+// destroy Server
 void destroy(int signo);
-//处理客户端信息
+// receive msg from Client
 void* rcvMsg(void* p);
-//发送消息给所有客户端
+// send msg to all Clients
 void sendMsgToAll(void* msg);
 
 int main()
 {
-	//设置关闭服务器的信号
+	// set signa to destroy Server
 	signal(SIGINT,destroy);
-	//初始化服务器
+	// initialize Server
 	init();
-	//启动服务器
+	// start Server
 	start();
 	return 0;
 }
 
-//初始化服务器
+// initializing
 void init(void)
 {
-	printf("服务器正在初始化...\n");
+	printf("Server initializing...\n");
 	sleep(3);
-	//1.创建socket
+	//1. create socket
 	sockfd = socket(AF_INET,SOCK_STREAM,0);
 	if(-1 == sockfd)
 	{
 		perror("socket server"),exit(-1);
 	}
-	//2.准备通信地址
+	//2. prepare address
 	struct sockaddr_in addr = {};
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(8888);
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");	
-	//3.进行socket和地址的绑定
+	//3. bind socket to address
 	int res = bind(sockfd,(struct sockaddr*)&addr,sizeof(addr));
 	if(-1 == res)
 	{
 		perror("bind server"),exit(-1);
 	}
-	printf("绑定成功\n");
-	//4.进行监听
+	printf("Binding Suceeded.\n");
+	//4. isten
 	res = listen(sockfd,100);
 	if(-1 == res)
 	{
 		perror("listen server"),exit(-1);
 	}
-	printf("服务器初始化成功\n");
+	printf("Server Initialized.\n");
 }
 
-//启动服务器
+// start Server
 void start(void)
 {
-	printf("服务器正在启动...\n");
+	printf("Starting Server...\n");
 	sleep(3);
-	printf("服务器启动成功\n");
+	printf("Server Started.\n");
 	while(1)
 	{
-		//1.准备一个新地址用来接受客户端的地址
+		//1. prepare a new address to accept Client address
 		struct sockaddr_in acvAddr;
 		socklen_t len = sizeof(acvAddr);
-		//2.响应客户端的请求，然后开辟新线程去响应客户端,为了腾出主线程继续响应新的客户端
+		//2. respond to Client requests and create new thread to reply to 
+		// Client and allow the amin thread to respond to the newcoming Cleints
 		int resfd = accept(sockfd,(struct sockaddr*)&acvAddr,&len);
 		if(-1 == resfd)
 		{
 			perror("accept server"),exit(-1);
 		}
-		printf("阻塞到这里了\n");
-		//3.开辟新线程去处理客户端的消息
+		printf("Error: Stucked here!\n");
+		//3. create new thread to respond to Client msg
 		pthread_t pid;
 		pthread_create(&pid,0,rcvMsg,&resfd);
-		//4.记录下连接成功的客户端fd
+		//4. record connected Clients' fd
 		fds[size++] = resfd;
 	}
 }
 
-//关闭服务器
+// destroy Server
 void destroy(int signo)
 {
-	//6.关闭服务器
-	printf("服务器正在关闭...\n");
+	//6. destroy Server
+	printf("Destorying Server...\n");
 	close(sockfd);
 	sleep(3);
 	exit(0);
 }
 
-//处理客户端信息
+// receive msg from Client
 void* rcvMsg(void* p)
 {
 	int tempFd = *(int*)p;
 	while(1)
 	{
-		//不停地接受来自客户端的消息
+		// keep receiving msg from Server
 		char buf[100] = {};
 		if(recv(tempFd,buf,sizeof(buf),0) <= 0)
 		{
@@ -127,12 +128,12 @@ void* rcvMsg(void* p)
 				}
 			}
 		}
-		//把接受到的消息发送给所有客户端
+		// send received msg to all Clients
 		sendMsgToAll(buf);
 	}
 }
 
-//发送消息给所有客户端
+// send msg to all connected Clients
 void sendMsgToAll(void* msg)
 {
 	char* str = (char*)msg;
